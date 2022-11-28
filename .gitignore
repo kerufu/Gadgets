@@ -3,5 +3,6 @@ Docker_ML/Spark/packages/hadoop-3.3.1/*
 Docker_ML/Spark/packages/spark-3.2.0-bin-hadoop3.2/*
 !Docker_ML/Spark/packages/spark-3.2.0-bin-hadoop3.2/conf
 
-myP
+myP/db.sqlite3
+myP/learningModel/savedModel/*
 
