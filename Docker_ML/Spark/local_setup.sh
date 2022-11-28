@@ -1,0 +1,1 @@
+mv ssh_keys/$HOSTNAME ~/.ssh/id_rsa

@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+ node1:
+  hostname: node1
+  image: "spark"
+  ports:
+   - "50070:50070"
+   - "8089:8088"
+   - "9871:9870"
+   - "4041:4040"
+  networks:
+      hadoop:
+        ipv4_address: 172.16.0.1
+ node2:
+  hostname: node2
+  image: "spark"
+  ports:
+   - "8090:8088"
+   - "9872:9870"
+   - "4042:4040"
+  networks:
+      hadoop:
+        ipv4_address: 172.16.0.2
+ node3:
+  hostname: node3
+  image: "spark"
+  ports:
+   - "8091:8088"
+   - "9873:9870"
+   - "4043:4040"
+  networks:
+      hadoop:
+        ipv4_address: 172.16.0.3
+ node4:
+  hostname: node4
+  image: "spark"
+  ports:
+   - "8092:8088"
+   - "9874:9870"
+   - "4044:4040"
+  networks:
+      hadoop:
+        ipv4_address: 172.16.0.4
+
+networks:
+ hadoop:
+  external: true

@@ -1,0 +1,6 @@
+build image: docker build -t spark .
+create network: docker network create --gateway 172.16.0.5 --subnet 172.16.0.0/24 hadoop
+run cluster: docker-compose up -d
+in node1: bash local_setup.sh && bash start.sh
+
+be careful aboud memory and disk volume

@@ -1,0 +1,8 @@
+isP learning
+Show image in path randomly, user add label weither it is porn in learning mode.
+Update model at the end.
+In non-learning mode, only show image predicted as porn
+Use mini batch learning
+
+p generator
+use GAN to generate
