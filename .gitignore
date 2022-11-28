@@ -1,3 +1,7 @@
+.git
+.gitattributes
+.gitignore
+
 Docker_ML/Spark/packages/*
 
 !Docker_ML/Spark/packages/hadoop-3.3.1
