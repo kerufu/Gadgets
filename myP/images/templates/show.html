@@ -3,20 +3,22 @@
 
 <input type="image" src="{% static imageToShow %}" onClick="window.location.reload();" style="max-width:100%;height:auto"/>
 
-<p>"{{ isPPrediction }}"</p>
+<p>Confidence: {{ isPPrediction }}</p>
+
+<p>Is this expected picture?</p>
+
+<form action="/images/labelImage/{{ withPrediciton }}/" method="post">
+  {% csrf_token %}
+      <input id="path" type="hidden" name="path" value="{{ imageToShow }}">
+      <input id="isP" type="hidden" name="isP" value="{{ 1 }}">
+      <input id="Yes" type="submit" value="Yes">
+</form>
 
 <form action="/images/labelImage/{{ withPrediciton }}/" method="post">
 {% csrf_token %}
     <input id="path" type="hidden" name="path" value="{{ imageToShow }}">
     <input id="isP" type="hidden" name="isP" value="{{ 0 }}">
     <input id="No" type="submit" value="No">
-</form>
-
-<form action="/images/labelImage/{{ withPrediciton }}/" method="post">
-{% csrf_token %}
-    <input id="path" type="hidden" name="path" value="{{ imageToShow }}">
-    <input id="isP" type="hidden" name="isP" value="{{ 1 }}">
-    <input id="Yes" type="submit" value="Yes" color="">
 </form>
 
 <p>

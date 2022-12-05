@@ -4,4 +4,4 @@ In learning mode, show pictures randomly, user labels pictures. Train the models
 
 In non-learning mode, only show pictures similar to labeled pictures.
 
-p generator: use simple GAN, may change to ldm+vae (Stable Diffusion) in future.
+generation model: use standard GAN and CAAE, may change to ldm+vae (Stable Diffusion) in future.

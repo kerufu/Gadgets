@@ -10,16 +10,16 @@ from learningModel.datasetManager import data_manager
 imageSize = 128
 
 
-class isPModel(Model):
+class Classifier(Model):
     def __init__(self):
-        super(isPModel, self).__init__()
+        super(Classifier, self).__init__()
         self.model = [
-            Conv2D(32, 2, activation='relu'),
-            Dropout(0.3),
             Conv2D(64, 2, activation='relu'),
             Dropout(0.3),
+            Conv2D(32, 2, activation='relu'),
+            Dropout(0.3),
             Flatten(),
-            Dense(128, activation='relu'),
+            Dense(32, activation='relu'),
             Dropout(0.3),
             Dense(1)
         ]
@@ -30,11 +30,11 @@ class isPModel(Model):
         return input
 
 
-class isPWoker():
-    modelPath = "learningModel/savedModel/isP"
+class ClassifierWoker():
+    modelPath = "learningModel/savedModel/Classifier"
 
     def __init__(self):
-        self.model = isPModel()
+        self.model = Classifier()
         try:
             self.model.load_weights(self.modelPath)
         except:
@@ -62,7 +62,7 @@ class isPWoker():
         return cv2.resize(img, (imageSize, imageSize),
                           interpolation=cv2.INTER_AREA)
 
-    def train(self, epochs=2):
+    def train(self, epochs=1):
         for _ in range(epochs):
             self.trainDataReady = False
             self.getData()

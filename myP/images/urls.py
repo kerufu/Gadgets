@@ -8,6 +8,6 @@ urlpatterns = [
     path('show/<int:withPrediciton>/', views.show, name='show'),
     path('labelImage/<int:withPrediciton>/', views.labelImage, name='labelImage'),
     path('learnImage/', views.learnImage, name='learnImage'),
-    path('generateImage/', views.generateImage, name='generateImage'),
+    path('generateImage/<int:isCAAE>/', views.generateImage, name='generateImage'),
     path('clearDataset/', views.clearDataset, name='clearDataset'),
 ]

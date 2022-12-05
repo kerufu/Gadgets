@@ -24,8 +24,7 @@ class datasetManager():
                 border = (img.shape[1] - img.shape[0]) // 2
                 img = cv2.copyMakeBorder(
                     img, border, border, 0, 0, random.choice([cv2.BORDER_REPLICATE, cv2.BORDER_REFLECT, cv2.BORDER_WRAP, cv2.BORDER_DEFAULT]))
-
-            return (img - 127.5) / 127.5
+            return img / 255
 
     def retrieveData(self):
         connection = sqlite3.connect("db.sqlite3")

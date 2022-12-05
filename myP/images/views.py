@@ -2,17 +2,19 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.urls import reverse
 import os
+import threading
 
 from images.models import pI, isP
-from learningModel.isPModel import isPWoker
-from learningModel.pGenerationModel import pGenerationWoker
+from learningModel.Classifier import ClassifierWoker
+from learningModel.StandardGAN import StandardGANWoker
+from learningModel.CAAE import CAAEWoker
 
 from myP.settings import STATICFILES_DIRS
 
-ispworker = isPWoker()
-pgenerationwoker = pGenerationWoker()
-
-
+classifierWoker = ClassifierWoker()
+standardGANWoker = StandardGANWoker()
+caaeWoker = CAAEWoker()
+isTraining = False
 def index(request):
     template = loader.get_template('index.html')
     pITableLength = pI.objects.all().count()
@@ -51,15 +53,15 @@ def updateDB(request):
     return HttpResponseRedirect('/images/')
 
 
-def show(request, withPrediciton):
+def show(request, withPrediciton=False):
     imageToShow = pI.objects.values_list('path').order_by('?').first()[0]
-    isPPrediction = ispworker.predict(imageToShow)
-    if withPrediciton == 1:
+    isPPrediction = -1
+    if withPrediciton == 1 and (not isTraining):
         count = 0
         while isPPrediction < 0.5 and count < 10:
             imageToShow = pI.objects.values_list(
                 'path').order_by('?').first()[0]
-            isPPrediction = ispworker.predict(imageToShow)
+            isPPrediction = classifierWoker.predict(imageToShow)
             count += 1
     template = loader.get_template('show.html')
     context = {
@@ -70,21 +72,34 @@ def show(request, withPrediciton):
     return HttpResponse(template.render(context, request))
 
 
-def labelImage(request, withPrediciton):
+def labelImage(request, withPrediciton=False):
     imagePath, imageLabel = request.POST.get('path'), request.POST.get('isP')
     isPObj = isP(path=imagePath, label=imageLabel)
     isPObj.save()
     return HttpResponseRedirect('/images/show/'+str(withPrediciton))
 
-
 def learnImage(request):
-    ispworker.train()
-    pgenerationwoker.train()
+    
+    def learnFunction():
+        global isTraining
+        isTraining = True
+        classifierWoker.train()
+        standardGANWoker.train()
+        caaeWoker.train()
+        isTraining = False
+
+    if not isTraining:
+        learnThread = threading.Thread(target=learnFunction)
+        learnThread.start()
     return HttpResponseRedirect(reverse('index'))
 
 
-def generateImage(request):
-    pgenerationwoker.generateImg()
+def generateImage(request, isCAAE=False):
+    if not isTraining:
+        if isCAAE:
+            caaeWoker.generateImg()
+        else:
+            standardGANWoker.generateImg()
     template = loader.get_template('generate.html')
     context = {
         'imageToShow': "generated0.jpg"
