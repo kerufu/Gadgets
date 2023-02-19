@@ -128,8 +128,8 @@ STATIC_URL = 'static/'
 PICTURE_DIR = "/Users/richard/Documents/.P"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
-    os.path.join(PICTURE_DIR, '/image'),
-    os.path.join(PICTURE_DIR, '/generatedImage'),
+    os.path.join(PICTURE_DIR, "image"),
+    os.path.join(PICTURE_DIR, "generatedImage"),
 ]
 
 # Default primary key field type
