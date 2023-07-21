@@ -11,6 +11,7 @@ from learningModel.datasetManager import data_manager
 imageSize = 256
 featureVectorLength = 100
 
+
 class Generator(Model):
     def __init__(self):
         super(Generator, self).__init__()
@@ -75,6 +76,10 @@ class StandardGANWoker():
         self.GOptimizer = tensorflow.keras.optimizers.Adam()
         self.DOptimizer = tensorflow.keras.optimizers.Adam()
 
+        self.GMetric = tensorflow.keras.metrics.BinaryCrossentropy(
+            from_logits=True)
+        self.DMetric = tensorflow.keras.metrics.BinaryAccuracy()
+
     def getDLoss(self, real_output, fake_output):
         real_loss = self.cross_entropy(
             tensorflow.ones_like(real_output), real_output)
@@ -89,21 +94,37 @@ class StandardGANWoker():
     def train_step(self, images, GIteration=1, DIteration=1):
         for _ in range(DIteration):
             with tensorflow.GradientTape() as D_tape:
-                noise = tensorflow.random.normal([batchSize, featureVectorLength])
+                noise = tensorflow.random.normal(
+                    [batchSize, featureVectorLength])
                 generated_images = self.G(noise, training=True)
                 real_output = self.D(images, training=True)
                 fake_output = self.D(generated_images, training=True)
                 D_loss = self.getDLoss(real_output, fake_output)
-                gradients_of_D = D_tape.gradient(D_loss, self.D.trainable_variables)
-                self.DOptimizer.apply_gradients(zip(gradients_of_D, self.D.trainable_variables))
+
+                self.DMetric.update_state(
+                    tensorflow.ones_like(real_output), real_output)
+                self.DMetric.update_state(
+                    tensorflow.zeros_like(fake_output), fake_output)
+
+                gradients_of_D = D_tape.gradient(
+                    D_loss, self.D.trainable_variables)
+                self.DOptimizer.apply_gradients(
+                    zip(gradients_of_D, self.D.trainable_variables))
         for _ in range(GIteration):
             with tensorflow.GradientTape() as G_tape:
-                noise = tensorflow.random.normal([batchSize, featureVectorLength])
+                noise = tensorflow.random.normal(
+                    [batchSize, featureVectorLength])
                 generated_images = self.G(noise, training=True)
                 fake_output = self.D(generated_images, training=True)
                 G_loss = self.getGLoss(fake_output)
-                gradients_of_G = G_tape.gradient(G_loss, self.G.trainable_variables)
-                self.GOptimizer.apply_gradients(zip(gradients_of_G, self.G.trainable_variables))
+
+                self.GMetric.update_state(
+                    tensorflow.ones_like(fake_output), fake_output)
+
+                gradients_of_G = G_tape.gradient(
+                    G_loss, self.G.trainable_variables)
+                self.GOptimizer.apply_gradients(
+                    zip(gradients_of_G, self.G.trainable_variables))
 
     def train(self, epochs=1):
         for epoch in range(epochs):
@@ -115,6 +136,8 @@ class StandardGANWoker():
                     self.train_step(image_batch)
                 print('Time for epoch {} is {} sec'.format(
                     epoch + 1, time.time()-start))
+                print("G Loss: " + self.GMetric.result.numpy())
+                print("D Accuracy: " + self.DMetric.result.numpy())
                 self.G.save(self.GPath)
                 self.D.save(self.DPath)
 
@@ -125,7 +148,7 @@ class StandardGANWoker():
         for index in range(len(trainDataLable[0])):
             if trainDataLable[1][index] == 1:
                 img = cv2.resize(trainDataLable[0][index], (imageSize, imageSize),
-                          interpolation=cv2.INTER_AREA)
+                                 interpolation=cv2.INTER_AREA)
                 self.trainData.append(img)
         if len(self.trainData) > 0:
             self.trainData = tensorflow.data.Dataset.from_tensor_slices(

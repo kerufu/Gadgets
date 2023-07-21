@@ -11,6 +11,7 @@ from learningModel.datasetManager import data_manager
 imageSize = 256
 featureVectorLength = 100
 
+
 class Encoder(Model):
     def __init__(self):
         super(Encoder, self).__init__()
@@ -119,8 +120,13 @@ class CAAEWoker():
         self.DOptimizer = tensorflow.keras.optimizers.Adam()
         self.DODOptimizer = tensorflow.keras.optimizers.Adam()
 
+        self.AutoEncodeMetric = tensorflow.keras.metrics.MeanSquaredError()
+        self.DOEMetric = tensorflow.keras.metrics.BinaryAccuracy()
+        self.DODMetric = tensorflow.keras.metrics.BinaryAccuracy()
+
     def getELoss(self, DOE_fake_output, input_image, D_output):
-        discriminator_loss = self.cross_entropy(tensorflow.ones_like(DOE_fake_output), DOE_fake_output)
+        discriminator_loss = self.cross_entropy(
+            tensorflow.ones_like(DOE_fake_output), DOE_fake_output)
         image_loss = self.mse(input_image, D_output)
         return discriminator_loss + image_loss
 
@@ -132,7 +138,8 @@ class CAAEWoker():
         return real_loss + fake_loss
 
     def getDLoss(self, DOD_fake_output, input_image, D_output):
-        discriminator_loss = self.cross_entropy(tensorflow.ones_like(DOD_fake_output), DOD_fake_output)
+        discriminator_loss = self.cross_entropy(
+            tensorflow.ones_like(DOD_fake_output), DOD_fake_output)
         image_loss = self.mse(input_image, D_output)
         return discriminator_loss + image_loss
 
@@ -144,45 +151,72 @@ class CAAEWoker():
         return real_loss + fake_loss
 
     @tensorflow.function
-    def train_step(self, images, conditions, EIteration=1, DIteration=1, DOEIteration=1, DODIteration=1):
-
+    def train_step(self, images, conditions, AEIteration=1, DOEIteration=1, DODIteration=1):
         for _ in range(DOEIteration):
             with tensorflow.GradientTape() as DOE_tape:
-                noise = tensorflow.random.normal([batchSize, featureVectorLength])
+                noise = tensorflow.random.normal(
+                    [batchSize, featureVectorLength])
                 encoded_feature_vector = self.E(images, training=True)
                 DOE_real_output = self.DOE(noise, training=True)
-                DOE_fake_output = self.DOE(encoded_feature_vector, training=True)
+                DOE_fake_output = self.DOE(
+                    encoded_feature_vector, training=True)
                 DOE_loss = self.getDOELoss(DOE_real_output, DOE_fake_output)
-                gradients_of_DOE = DOE_tape.gradient(DOE_loss, self.DOE.trainable_variables)
-                self.DOEOptimizer.apply_gradients(zip(gradients_of_DOE, self.DOE.trainable_variables))
-        for _ in range(EIteration):
-            with tensorflow.GradientTape() as E_tape:
-                encoded_feature_vector = self.E(images, training=True)
-                DOE_fake_output = self.DOE(encoded_feature_vector, training=True)
-                conditional_encoded_feature_vector = tensorflow.concat([encoded_feature_vector, conditions], 1)
-                decoded_images = self.D(conditional_encoded_feature_vector, training=True)
-                E_loss = self.getELoss(DOE_fake_output, images, decoded_images)
-                gradients_of_E = E_tape.gradient(E_loss, self.E.trainable_variables)
-                self.EOptimizer.apply_gradients(zip(gradients_of_E, self.E.trainable_variables))
+
+                self.DOEMetric.update_state(
+                    tensorflow.ones(DOE_real_output), DOE_real_output)
+                self.DOEMetric.update_state(
+                    tensorflow.zeros(DOE_fake_output), DOE_fake_output)
+
+                gradients_of_DOE = DOE_tape.gradient(
+                    DOE_loss, self.DOE.trainable_variables)
+                self.DOEOptimizer.apply_gradients(
+                    zip(gradients_of_DOE, self.DOE.trainable_variables))
         for _ in range(DODIteration):
             with tensorflow.GradientTape() as DOD_tape:
                 encoded_feature_vector = self.E(images, training=True)
-                conditional_encoded_feature_vector = tensorflow.concat([encoded_feature_vector, conditions], 1)
-                decoded_images = self.D(conditional_encoded_feature_vector, training=True)
+                conditional_encoded_feature_vector = tensorflow.concat(
+                    [encoded_feature_vector, conditions], 1)
+                decoded_images = self.D(
+                    conditional_encoded_feature_vector, training=True)
                 DOD_real_output = self.DOD(images, training=True)
                 DOD_fake_output = self.DOD(decoded_images, training=True)
                 DOD_loss = self.getDODLoss(DOD_real_output, DOD_fake_output)
-                gradients_of_DOD = DOD_tape.gradient(DOD_loss, self.DOD.trainable_variables)
-                self.DODOptimizer.apply_gradients(zip(gradients_of_DOD, self.DOD.trainable_variables))
-        for _ in range(DIteration):
-            with tensorflow.GradientTape() as D_tape:
-                encoded_feature_vector = self.E(images, training=True)
-                conditional_encoded_feature_vector = tensorflow.concat([encoded_feature_vector, conditions], 1)
-                decoded_images = self.D(conditional_encoded_feature_vector, training=True)
-                DOD_fake_output = self.DOD(decoded_images, training=True)
-                D_loss = self.getDLoss(DOD_fake_output, images, decoded_images)
-                gradients_of_D = D_tape.gradient(D_loss, self.D.trainable_variables)
-                self.DOptimizer.apply_gradients(zip(gradients_of_D, self.D.trainable_variables))
+
+                self.DODMetric.update_state(
+                    tensorflow.ones(DOD_real_output), DOD_real_output)
+                self.DODMetric.update_state(
+                    tensorflow.zeros(DOD_fake_output), DOD_fake_output)
+
+                gradients_of_DOD = DOD_tape.gradient(
+                    DOD_loss, self.DOD.trainable_variables)
+                self.DODOptimizer.apply_gradients(
+                    zip(gradients_of_DOD, self.DOD.trainable_variables))
+        for _ in range(AEIteration):
+            with tensorflow.GradientTape() as E_tape:
+                with tensorflow.GradientTape() as D_tape:
+                    encoded_feature_vector = self.E(images, training=True)
+                    DOE_fake_output = self.DOE(
+                        encoded_feature_vector, training=True)
+                    conditional_encoded_feature_vector = tensorflow.concat(
+                        [encoded_feature_vector, conditions], 1)
+                    decoded_images = self.D(
+                        conditional_encoded_feature_vector, training=True)
+                    E_loss = self.getELoss(
+                        DOE_fake_output, images, decoded_images)
+                    DOD_fake_output = self.DOD(decoded_images, training=True)
+                    D_loss = self.getDLoss(
+                        DOD_fake_output, images, decoded_images)
+
+                    self.AutoEncodeMetric.update_state(images, decoded_images)
+
+                    gradients_of_E = E_tape.gradient(
+                        E_loss, self.E.trainable_variables)
+                    self.EOptimizer.apply_gradients(
+                        zip(gradients_of_E, self.E.trainable_variables))
+                    gradients_of_D = D_tape.gradient(
+                        D_loss, self.D.trainable_variables)
+                    self.DOptimizer.apply_gradients(
+                        zip(gradients_of_D, self.D.trainable_variables))
 
     def train(self, epochs=1):
         for epoch in range(epochs):
@@ -192,10 +226,14 @@ class CAAEWoker():
                 start = time.time()
                 for batch in self.trainData:
                     images, conditions = batch
-                    conditions = tensorflow.expand_dims(tensorflow.cast(conditions, dtype = tensorflow.float32), axis=1)
+                    conditions = tensorflow.expand_dims(tensorflow.cast(
+                        conditions, dtype=tensorflow.float32), axis=1)
                     self.train_step(images, conditions)
                 print('Time for epoch {} is {} sec'.format(
                     epoch + 1, time.time()-start))
+                print("AE Loss" + self.AutoEncodeMetric.result.numpy())
+                print("DOE Accuracy" + self.DOEMetric.result.numpy())
+                print("DOD Accuracy" + self.DODMetric.result.numpy())
                 self.E.save(self.EPath)
                 self.DOE.save(self.DOEPath)
                 self.D.save(self.DPath)
@@ -208,7 +246,7 @@ class CAAEWoker():
         condition = []
         for index in range(len(trainDataLable[0])):
             img = cv2.resize(trainDataLable[0][index], (imageSize, imageSize),
-                        interpolation=cv2.INTER_AREA)
+                             interpolation=cv2.INTER_AREA)
             self.trainData.append(img)
             condition.append(trainDataLable[1][index])
         if len(self.trainData) > 0:
