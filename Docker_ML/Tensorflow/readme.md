@@ -1,3 +1,6 @@
+run multiple containers in one host
+run containers: docker-compose up -d
+
 1. Various augmentation methonds
   a. Filtering
   b. Perspective transform
