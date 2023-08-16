@@ -1,5 +1,5 @@
-Docker_ML/Spark/packages/hadoop-3.3.1/*
-!Docker_ML/Spark/packages/hadoop-3.3.1/etc
-Docker_ML/Spark/packages/spark-3.2.0-bin-hadoop3.2/*
-!Docker_ML/Spark/packages/spark-3.2.0-bin-hadoop3.2/conf
+Docker/Spark/packages/hadoop-3.3.1/*
+!Docker/Spark/packages/hadoop-3.3.1/etc
+Docker/Spark/packages/spark-3.2.0-bin-hadoop3.2/*
+!Docker/Spark/packages/spark-3.2.0-bin-hadoop3.2/conf
 
