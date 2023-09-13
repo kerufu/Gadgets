@@ -1,0 +1,12 @@
+{% for user in user_data %}
+    <tr>
+        <td>{{ user.user_id }}</td>
+        <td>{{ user.name }}</td>
+        <td>{{ user.password }}</td>
+        <br>
+    </tr>
+{% endfor %}
+
+<p>
+  <a href="/sql_injection/">Home</a>
+</p>

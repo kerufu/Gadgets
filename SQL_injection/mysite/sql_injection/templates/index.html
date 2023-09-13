@@ -1,0 +1,19 @@
+<p>
+    <a href="resetDB/">Reset DB</a>
+</p>
+
+<form action="/sql_injection/fetch_with_id/" method="post">
+    {% csrf_token %}
+    <label for="user_id">User ID: </label>
+    <input type="text" id="user_id" name="user_id"><br><br>
+    <input id="submit_id" type="submit" value="submit_id">
+</form>
+
+<form action="/sql_injection/login/" method="post">
+    {% csrf_token %}
+    <label for="user_id">Username: </label>
+    <input type="text" id="username" name="username"><br><br>
+    <label for="user_id">Password: </label>
+    <input type="text" id="password" name="password"><br><br>
+    <input id="login" type="submit" value="login">
+</form>
