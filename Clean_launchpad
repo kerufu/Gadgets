@@ -1,9 +1,0 @@
-#!/bin/bash
-PASSWORD="password"
-DATABASE_PATH=$(echo $PASSWORD | sudo -S find /private/var/folders -name com.apple.dock.launchpad)
-rm ~/Library/Application\ Support/Dock/*.db
-for APP in "'App1'" "'App2'"
-do
-	sqlite3 $DATABASE_PATH/db/db "DELETE FROM apps WHERE title=$APP;"
-done
-killall Dock
